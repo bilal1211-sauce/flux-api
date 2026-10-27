@@ -1,0 +1,14 @@
+{
+  "name": "apiforge",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "companion": "node scripts/companion.mjs",
+    "build": "npm --prefix apps/web run build",
+    "lint": "npm --prefix apps/web run lint",
+    "typecheck": "npm --prefix apps/web run typecheck",
+    "test:api": "node scripts/php.mjs artisan test",
+    "test:e2e": "npm --prefix apps/web run test:e2e",
+    "setup": "node scripts/setup.mjs"
+  }
+}

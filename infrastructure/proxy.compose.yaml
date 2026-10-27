@@ -1,0 +1,17 @@
+services:
+  proxy:
+    image: caddy:2-alpine
+    environment:
+      WEB_HOST: ${WEB_HOST:?Set the public hostname}
+      ACME_EMAIL: ${ACME_EMAIL:?Set a certificate contact email}
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes:
+      - ./Proxy.Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks: [web_public]
+    depends_on: [web]
+    restart: unless-stopped
+volumes:
+  caddy_data: {}
+  caddy_config: {}

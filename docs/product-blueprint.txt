@@ -1,0 +1,323 @@
+APIForge — Project 01: Complete Product Blueprint
+Project 01 / 07
+Laravel Backend · Next.js Frontend · API Testing · Monitoring · SaaS
+
+Bilal bro, ab hum APIForge ko ek proper, portfolio-worthy software product banayenge. Sirf pretty dashboard nahi — real APIs, real database, working request engine, team collaboration, monitoring, reporting, aur polished UI/UX.
+Humara development sequence hoga:
+Planning → Database → Backend → Frontend → API Engine → Testing → Monitoring → Production → Portfolio Case Study
+Aur haan, pehle APIForge complete karenge. Baaki six projects apni jagah rahenge; hum unhein baad mein start karenge.
+1. Product vision
+
+APIForge
+Build. Test. Monitor. Trust.
+
+
+An API workspace where developers can organize requests, manage environments, validate API responses, monitor approved services, and collaborate with teammates without switching between several tools.
+Design references
+
+
+
+
+
+
+
+
+
+Request Studio
+Developer workspace inspired by established API clients
+
+
+
+
+
+
+
+
+
+Monitoring Dashboard
+Operational analytics with readable charts
+
+
+
+
+
+
+
+
+
+Response Inspector
+Structured JSON, diagnostics, and assertions
+
+
+
+
+
+
+
+
+
+Reliability Analytics
+Performance history, run outcomes, and reports
+
+The visual direction I recommend for the APIForge application itself is a neutral graphite workspace with restrained cyan, mint, and violet status accents. This is independent of your personal portfolio's visual identity.
+2. Complete feature architecture
+Module	Functionality	Release
+Authentication	Login, registration, secure sessions	MVP
+Organizations	Workspaces, membership, roles	MVP
+Collections	Folders, requests, organization	MVP
+Request Studio	Methods, URLs, headers, body, query params	MVP
+Environments	Dev/staging/prod variables and secrets	MVP
+Response Inspector	Status, JSON, headers, timing, errors	MVP
+Assertions	Status, headers, JSON path, response checks	MVP
+Test History	Saved runs, results, filtering	MVP
+Dashboard	Overview, activity, quick access	MVP
+Monitoring	Scheduled endpoint checks	V2
+Analytics	Latency, failure rate, trends	V2
+Alerts	Notification rules and delivery	V2
+OpenAPI	Import and validate supported specifications	V2
+Reports	Read-only, scoped shareable reports	V2
+Audit Logs	Workspace security activity	MVP
+Admin Console	Users, limits, system operations	V2
+Key architectural decisions
+Backend: PHP 8.3-compatible Laravel release, MySQL 8.4, Redis, Laravel Queues, and a dedicated request execution service.
+Frontend: Next.js App Router, React, TypeScript, Tailwind CSS, TanStack Query, and a code editor component. Next.js supports the App Router structure and modern React rendering patterns.
+
+Next.js
++1
+
+
+
+Core principle: The browser edits and presents requests. The Laravel backend validates authorization and manages execution and results. Network requests run through a restricted executor, not an unrestricted server-side URL fetch.
+Important security boundary: Initially, APIForge will only send requests to deliberately approved demo targets and endpoints the workspace is authorized to test. We'll enforce network destination restrictions, redirect rules, DNS/IP validation at connection time, timeouts, quotas, and secret redaction. These are essential to prevent server-side request forgery.
+
+OWASP Cheat Sheet Series
++1
+
+
+
+3. Interactive APIForge UI prototype
+This is our first functional-looking frontend mockup. You can switch sections, edit the request, choose a method, run a simulated demo, view JSON results, and test the light/dark appearance.
+
+
+
+
+
+This prototype contains local, simulated data only. It does not execute HTTP requests, connect to a database, or represent completed backend functionality.4. Backend and database architecture
+Next.js Frontend
+Request editor · Collections · Monitoring · Analytics
+
+Laravel REST API
+Authentication · Authorization · Validation · Business logic
+
+MySQL
+Workspaces, requests, test runs, users
+
+Redis + Queues
+Jobs, caching, scheduling
+
+
+
+Restricted Request Executor
+Approved targets · Network isolation · Execution limits
+
+Authorized Demo / Test APIs
+Validated responses, assertions, monitoring results
+
+Proposed MySQL tables
+Domain	Tables
+Identity	users, personal_access_tokens
+Workspaces	workspaces, workspace_members, invitations
+Collections	collections, collection_folders, api_requests
+Environments	environments, environment_variables
+Execution	request_runs, response_records, request_assertions, assertion_results
+Monitoring	monitors, monitor_runs, alert_rules, alert_events
+Platform	audit_logs, share_links, usage_records
+Every workspace-owned record should have a clearly enforced tenant boundary. Secrets will be encrypted at rest, excluded from logs, and never returned unnecessarily to clients. Large response bodies will have configurable size and retention limits.
+5. Full implementation roadmap — 12 development milestones
+1. Foundation and repository
+   Laravel API, Next.js TypeScript app, local database, environment templates, linting, formatting, and Git setup.
+   Acceptance: Both applications launch locally and health checks respond.
+2. Design system and application shell
+   Responsive sidebar, navigation, topbar, typography, spacing tokens, reusable buttons, forms, loading states, and dark/light modes.
+   Acceptance: All initial pages are navigable without relying on mock page reloads.
+3. Authentication and authorization
+   Account registration, sessions, login protection, workspaces, membership and policies.
+   Acceptance: Users cannot access another workspace's data.
+4. Collections and folders
+   Create, edit, delete, and reorganize saved API requests with workspace ownership.
+   Acceptance: Collections persist and have automated API tests.
+5. Professional Request Studio
+   HTTP methods, URL editor, request body, headers, query parameters, environment selection, tabs, and keyboard shortcuts.
+   Acceptance: Editor state is reliable and saved requests reopen correctly.
+6. Restricted execution engine
+   Approved-target HTTP execution, network isolation, request validation, safe timeouts, size limits, and response capture.
+   Acceptance: Authorized demo requests succeed; prohibited destinations are rejected.
+7. Assertions and history
+   Response checks, execution history, result comparison, filtering, and error diagnostics.
+   Acceptance: Test results can be reproduced and independently verified.
+8. Environments and collaboration
+   Environment variables, encrypted secrets, workspace permissions, invitations, and audit logging.
+   Acceptance: Team members see only permitted resources.
+9. Synthetic monitoring
+   Scheduled checks against approved services, queue workers, service status, and failure tracking.
+   Acceptance: Checks execute on schedule without overlapping uncontrollably.
+10. Analytics and alerts
+    Latency charts, uptime reports, failure classification, notification preferences, and alert deduplication.
+    Acceptance: Metrics match stored execution records.
+11. Advanced integrations
+    OpenAPI import, regression comparisons, read-only report sharing, and optional CI integration.
+    Acceptance: Imported collections validate correctly and share links enforce permissions and expiry.
+12. Production and portfolio case study
+    Security review, automated tests, deployment, monitoring, user documentation, demo accounts, and public case study.
+    Acceptance: A visitor can safely complete an end-to-end demonstration without gaining administrative access.
+
+6. Repository structure
+apiforge/
+├── apps/
+│   ├── api/                  # Laravel
+│   │   ├── app/
+│   │   │   ├── Domain/
+│   │   │   │   ├── Workspaces/
+│   │   │   │   ├── Collections/
+│   │   │   │   ├── Requests/
+│   │   │   │   ├── Executions/
+│   │   │   │   └── Monitoring/
+│   │   │   ├── Http/
+│   │   │   ├── Jobs/
+│   │   │   └── Policies/
+│   │   ├── database/
+│   │   ├── routes/
+│   │   └── tests/
+│   │
+│   └── web/                  # Next.js
+│       ├── src/app/
+│       ├── src/components/
+│       │   ├── layout/
+│       │   ├── ui/
+│       │   ├── requests/
+│       │   ├── collections/
+│       │   └── monitoring/
+│       ├── src/features/
+│       ├── src/lib/
+│       └── src/styles/
+│
+├── packages/
+│   └── contracts/            # Shared API contracts
+├── docs/
+│   ├── architecture/
+│   ├── database/
+│   ├── security/
+│   └── ui-ux/
+├── infrastructure/
+└── README.md
+
+
+7. First VS Code Codex implementation prompt
+Ye Milestone 01/12 ka ready-to-use development prompt hai. Isse Codex ko instructions milengi ke foundation professionally create kare, without pretending that advanced modules already work.
+APIForge — Codex Implementation 01/12
+Foundation, Architecture and Repository Setup
+You are a senior full-stack software architect building APIForge, a professional API testing, collaboration and monitoring SaaS application.
+Product context
+APIForge is an API Reliability Console for developers and small teams. The application will eventually include workspace management, collections, environments, API testing, response inspection, assertions, test history, monitoring, analytics and secure team collaboration.
+Technology choices
+- Backend: Laravel, PHP 8.3 compatible
+- Frontend: Next.js App Router, React and TypeScript
+- Styling: Tailwind CSS
+- Database: MySQL 8.4
+- Background processing: Redis and Laravel Queues
+- Testing: Laravel's testing framework and suitable frontend test tools
+- Code quality: strict TypeScript, linting and consistent formatting
+Use stable, supported versions compatible with the actual local runtime. Verify installed tooling and compatibility rather than assuming version numbers.
+Step 1 — Inspect the environment
+1. Inspect the repository and available runtimes.
+2. Determine whether any existing files or applications must be preserved.
+3. Check PHP, Composer, Node.js, npm, Git, MySQL and Redis availability.
+4. Report missing prerequisites without performing destructive operations.
+5. If code already exists, reuse safe compatible parts and avoid overwriting them.
+Step 2 — Establish the repository
+Create a clean monorepo with:
+- apps/api
+- apps/web
+- packages/contracts
+- docs/architecture
+- docs/database
+- docs/security
+- docs/ui-ux
+- infrastructure
+Do not add unnecessary abstractions or libraries.
+Step 3 — Laravel foundation
+- Initialize the Laravel backend.
+- Configure versioned API routing.
+- Set up environment validation.
+- Configure CORS appropriately.
+- Add a public health endpoint returning safe non-sensitive information.
+- Implement a consistent API error response format.
+- Add basic request validation conventions.
+- Configure database and queue connections without exposing credentials.
+- Add a passing health endpoint test.
+Step 4 — Next.js foundation
+- Initialize Next.js with TypeScript, App Router and Tailwind CSS.
+- Implement a modular app structure.
+- Build a responsive application shell.
+- Add navigation placeholders for Dashboard, Collections, Request Studio, Monitoring, History and Settings.
+- Build shared button, input, card, navigation and status components.
+- Add coherent dark and light theme tokens.
+- Use the selected APIForge design direction: refined developer-tool aesthetics, neutral dark surfaces, mint/cyan highlights, and carefully restrained violet accents.
+- Prioritize good typography, accessibility and readability.
+- Ensure mobile layouts remain functional.
+Step 5 — Architecture documentation
+Document:
+- System boundaries.
+- Proposed modules.
+- Database entities and relationships.
+- Tenant isolation rules.
+- Authentication strategy.
+- Request execution trust boundaries.
+- API versioning conventions.
+- Background job responsibilities.
+Step 6 — Security rules
+- Never execute arbitrary user-supplied network requests during this milestone.
+- Never assume a URL is safe just because its hostname appears public.
+- Design for destination allowlisting, DNS-rebinding protection, restricted network egress, redirect controls, execution quotas, and encrypted secrets.
+- Never log credentials or sensitive request headers.
+- Never use production credentials or destructive database commands.
+Step 7 — Quality validation
+- Install project dependencies where the environment allows it.
+- Run formatting and lint checks.
+- Run backend tests.
+- Run frontend build/type checks.
+- Fix implementation errors that are within scope.
+- If a dependency is unavailable, report it accurately rather than claiming the build passed.
+Deliverables
+Provide:
+1. Working repository foundation.
+2. Responsive frontend application shell.
+3. Working Laravel health endpoint.
+4. Core architecture documentation.
+5. Local setup instructions.
+6. Test/build results.
+7. Exact list of changed files.
+8. Any unresolved issues.
+Important
+Do not implement fake functional modules.
+Placeholder screens must be visibly identified as placeholders. Do not claim that request execution, monitoring, collaboration or analytics works until their respective modules are implemented and tested.
+After completing this milestone, report readiness for Milestone 02 (Design System and Application Shell) without automatically starting unrelated milestones.
+
+
+
+
+8. Our first acceptance checklist
+Milestone 01 progress
+0/9
+
+
+
+[ ] Repository initialized safely
+[ ] Laravel API starts locally
+[ ] Next.js frontend starts locally
+[ ] MySQL connection verified
+[ ] Health endpoint passes test
+[ ] Responsive navigation works
+[ ] Dark and light themes work
+[ ] Architecture documentation written
+[ ] Build and tests validated

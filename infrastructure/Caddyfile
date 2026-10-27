@@ -1,0 +1,10 @@
+{
+    auto_https off
+    admin off
+    frankenphp
+}
+:8080 {
+    root * {$DOCUMENT_ROOT:/app/apps/api/public}
+    encode zstd gzip
+    php_server
+}

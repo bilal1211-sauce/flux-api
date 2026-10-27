@@ -1,0 +1,15 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "JSONPlaceholder demo", "version": "1.0.0" },
+  "servers": [{ "url": "https://jsonplaceholder.typicode.com" }],
+  "paths": {
+    "/posts/{id}": {
+      "get": {
+        "summary": "Get a post",
+        "tags": ["Posts"],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "example": 1, "schema": { "type": "integer" } }],
+        "responses": { "200": { "description": "A post" } }
+      }
+    }
+  }
+}

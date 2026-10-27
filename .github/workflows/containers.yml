@@ -1,0 +1,40 @@
+name: Container smoke test
+on: [push, pull_request, workflow_dispatch]
+permissions:
+  contents: read
+jobs:
+  compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create ephemeral test configuration
+        run: |
+          cp infrastructure/.env.example infrastructure/.env
+          cat >> infrastructure/.env <<EOF
+          APP_KEY=base64:$(openssl rand -base64 32)
+          WEB_ORIGIN=https://localhost
+          DB_PASSWORD=$(openssl rand -hex 24)
+          DB_ROOT_PASSWORD=$(openssl rand -hex 24)
+          REDIS_PASSWORD=$(openssl rand -hex 24)
+          EXECUTOR_TOKEN=$(openssl rand -hex 32)
+          MAIL_HOST=127.0.0.1
+          MAIL_USERNAME=ci-only
+          MAIL_PASSWORD=ci-only
+          MAIL_FROM_ADDRESS=ci@example.test
+          EOF
+      - run: docker compose --env-file infrastructure/.env -f infrastructure/compose.yaml config --quiet
+      - run: docker compose --env-file infrastructure/.env -f infrastructure/compose.yaml build
+      - run: docker compose --env-file infrastructure/.env -f infrastructure/compose.yaml up -d mysql redis
+      - run: docker compose --env-file infrastructure/.env -f infrastructure/compose.yaml run --rm api php artisan migrate --force
+      - run: docker compose --env-file infrastructure/.env -f infrastructure/compose.yaml up -d
+      - name: Check real containers
+        run: |
+          for i in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:3000/api/gateway/health; then break; fi
+            sleep 2
+          done
+          curl --fail http://127.0.0.1:3000/api/gateway/health
+          docker compose --env-file infrastructure/.env -f infrastructure/compose.yaml exec -T api php artisan apiforge:doctor
+          bash infrastructure/backup.sh
+      - if: always()
+        run: docker compose --env-file infrastructure/.env -f infrastructure/compose.yaml down -v

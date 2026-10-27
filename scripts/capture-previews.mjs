@@ -1,0 +1,34 @@
+import { createRequire } from 'node:module';
+import { readFileSync, mkdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+const root = resolve(import.meta.dirname, '..');
+const require = createRequire(resolve(root,'apps/web/package.json'));
+const { chromium } = require('@playwright/test');
+const account = JSON.parse(readFileSync(resolve(root,'.runtime/demo-account.json'),'utf8'));
+const output = resolve(root,'docs/previews');
+mkdirSync(output,{recursive:true});
+const browser = await chromium.launch();
+try {
+  const page = await browser.newPage({viewport:{width:1440,height:1000}});
+  await page.goto(new URL('/dashboard', account.url).href);
+  await page.getByLabel('Email address').waitFor();
+  await page.screenshot({path:resolve(output,'sign-in.png'),fullPage:true,animations:'disabled'});
+  await page.getByLabel('Email address').fill(account.email);
+  await page.getByLabel('Password',{exact:true}).fill(account.password);
+  await page.getByRole('button',{name:'Sign in',exact:true}).click();
+  await page.getByRole('heading',{name:'Workspace overview'}).waitFor();
+  await page.screenshot({path:resolve(output,'dashboard-desktop.png'),fullPage:true,animations:'disabled'});
+  await page.getByRole('button',{name:'Toggle color theme'}).click();
+  await page.screenshot({path:resolve(output,'dashboard-light.png'),fullPage:true,animations:'disabled'});
+  await page.getByRole('button',{name:'Toggle color theme'}).click();
+  await page.goto(`${account.url}/studio`);
+  await page.getByLabel('Open saved request').waitFor();
+  await page.getByLabel('Open saved request').selectOption({label:'GET · Get a single post'});
+  await page.getByRole('button',{name:/^Send/}).click();
+  await page.locator('.response-heading .badge').filter({hasText:'200 OK'}).waitFor({timeout:30000});
+  await page.locator('.cm-editor').first().waitFor();
+  await page.screenshot({path:resolve(output,'studio-desktop.png'),fullPage:true,animations:'disabled'});
+  await page.setViewportSize({width:390,height:844});
+  await page.screenshot({path:resolve(output,'studio-mobile.png'),fullPage:true,animations:'disabled'});
+  console.log('Five browser previews captured from the working local demo account.');
+} finally { await browser.close(); }

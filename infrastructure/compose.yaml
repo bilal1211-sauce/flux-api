@@ -1,0 +1,131 @@
+name: apiforge
+x-api: &api
+  build:
+    context: ..
+    dockerfile: infrastructure/api.Dockerfile
+  environment: &api-env
+    APP_NAME: APIForge
+    APP_ENV: production
+    APP_DEBUG: "false"
+    APP_KEY: ${APP_KEY:?Set a Laravel application key}
+    APP_URL: ${WEB_ORIGIN:?Set your HTTPS public origin}
+    WEB_URL: ${WEB_ORIGIN}
+    EMAIL_VERIFICATION_REQUIRED: "true"
+    MAIL_MAILER: smtp
+    MAIL_SCHEME: ${MAIL_SCHEME:-smtp}
+    MAIL_HOST: ${MAIL_HOST:?Set your SMTP server}
+    MAIL_PORT: ${MAIL_PORT:-587}
+    MAIL_USERNAME: ${MAIL_USERNAME:?Set your SMTP username}
+    MAIL_PASSWORD: ${MAIL_PASSWORD:?Set your SMTP password}
+    MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:?Set a verified sender address}
+    MAIL_FROM_NAME: APIForge
+    ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
+    ALERT_WEBHOOK_TOKEN: ${ALERT_WEBHOOK_TOKEN:-}
+    DB_CONNECTION: mysql
+    DB_HOST: mysql
+    DB_DATABASE: apiforge
+    DB_USERNAME: apiforge
+    DB_PASSWORD: ${DB_PASSWORD:?Set a database password}
+    CACHE_STORE: redis
+    QUEUE_CONNECTION: redis
+    SESSION_DRIVER: redis
+    REDIS_CLIENT: predis
+    REDIS_HOST: redis
+    REDIS_PASSWORD: ${REDIS_PASSWORD:?Set a Redis password}
+    EXECUTOR_URL: http://executor:8080
+    EXECUTOR_TOKEN: ${EXECUTOR_TOKEN:?Set a random executor token}
+    EXECUTOR_APPROVED_HOSTS: ${EXECUTOR_APPROVED_HOSTS:-jsonplaceholder.typicode.com,httpbin.org}
+    LOG_CHANNEL: stderr
+    LOG_LEVEL: warning
+  depends_on:
+    mysql:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+  networks: [database, executor_control, frontend, notification_egress]
+  restart: unless-stopped
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: apiforge
+      MYSQL_USER: apiforge
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set a separate root password}
+    volumes: [mysql_data:/var/lib/mysql]
+    networks: [database]
+    healthcheck:
+      test: [CMD-SHELL, "mysqladmin ping -h 127.0.0.1 --silent"]
+      interval: 10s
+      retries: 20
+    restart: unless-stopped
+  redis:
+    image: redis:7.4-alpine
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: [sh, -c, 'exec redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}"']
+    volumes: [redis_data:/data]
+    networks: [database]
+    healthcheck:
+      test: [CMD-SHELL, 'REDISCLI_AUTH="$${REDIS_PASSWORD}" redis-cli ping | grep PONG']
+      interval: 10s
+      retries: 10
+    restart: unless-stopped
+  api:
+    <<: *api
+    volumes: [api_storage:/app/apps/api/storage]
+  worker:
+    <<: *api
+    command: [php, artisan, "queue:work", "--sleep=2", "--tries=3", "--timeout=65"]
+    volumes: [api_storage:/app/apps/api/storage]
+  scheduler:
+    <<: *api
+    command: [php, artisan, "schedule:work"]
+    networks: [database]
+  executor:
+    build:
+      context: ..
+      dockerfile: infrastructure/api.Dockerfile
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DOCUMENT_ROOT: /app/apps/executor/public
+      EXECUTOR_TOKEN: ${EXECUTOR_TOKEN}
+      EXECUTOR_APPROVED_HOSTS: ${EXECUTOR_APPROVED_HOSTS:-jsonplaceholder.typicode.com,httpbin.org}
+      EXECUTOR_TIMEOUT_SECONDS: 15
+      EXECUTOR_MAX_RESPONSE_BYTES: 262144
+      LOG_CHANNEL: stderr
+      LOG_LEVEL: error
+    dns: [1.1.1.1, 1.0.0.1]
+    sysctls:
+      net.ipv6.conf.all.disable_ipv6: "1"
+      net.ipv6.conf.default.disable_ipv6: "1"
+    networks: [executor_control, executor_egress]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+  web:
+    build:
+      context: ..
+      dockerfile: infrastructure/web.Dockerfile
+    environment:
+      API_ORIGIN: http://api:8080
+      WEB_ORIGIN: ${WEB_ORIGIN}
+    ports: ["127.0.0.1:3000:3000"]
+    networks: [frontend, web_public]
+    depends_on: [api]
+    restart: unless-stopped
+networks:
+  database:
+    internal: true
+  executor_control:
+    internal: true
+  frontend:
+    internal: true
+  executor_egress: {}
+  web_public: {}
+  notification_egress: {}
+volumes:
+  mysql_data: {}
+  redis_data: {}
+  api_storage: {}
